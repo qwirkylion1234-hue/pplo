@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Butterfly Number Bonds to 10</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@600;700;800&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Quicksand', 'Fredoka', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .font-num {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .font-title {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Sky Gradient Background */
+        .sky-background {
+            background: linear-gradient(180deg, #7dd3fc 0%, #bae6fd 45%, #e0f2fe 80%, #f0fdf4 100%);
+        }
+
+        /* Dynamic SVG Wings Glow */
+        .butterfly-shadow {
+            filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.15));
+        }
+
+        /* Pulsing Drop Zone Border */
+        @keyframes border-pulse {
+            0%, 100% { border-color: #f59e0b; transform: scale(1); }
+            50% { border-color: #fbbf24; transform: scale(1.02); }
+        }
+
+        .drop-target-pulse {
+            animation: border-pulse 2s infinite ease-in-out;
+        }
+
+        /* Butterfly Flutter Effect */
+        @keyframes gentle-flutter {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-4px) rotate(-2deg); }
+            75% { transform: translateY(3px) rotate(2deg); }
+        }
+
+        .animate-flutter {
+            animation: gentle-flutter 3.5s infinite ease-in-out;
+        }
+
+        /* Custom Scrollbar for Top Shelf */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="sky-background min-h-screen text-slate-800 flex flex-col items-center justify-between p-2 sm:p-4 overflow-x-hidden relative">
+
+    <!-- Cloud Decorations in Background -->
+    <div class="fixed top-6 left-6 text-white/70 text-5xl pointer-events-none select-none z-0">
+        <i class="fa-solid fa-cloud"></i>
+    </div>
+    <div class="fixed top-12 right-10 text-white/60 text-7xl pointer-events-none select-none z-0">
+        <i class="fa-solid fa-cloud"></i>
+    </div>
+    <div class="fixed top-1/3 left-1/4 text-white/40 text-4xl pointer-events-none select-none z-0">
+        <i class="fa-solid fa-cloud"></i>
+    </div>
+
+    <!-- Header Section -->
+    <header class="w-full max-w-4xl flex items-center justify-between bg-white/80 backdrop-blur-md rounded-2xl p-2.5 sm:p-4 shadow-md z-10 border border-sky-100">
+        <div class="flex items-center gap-2">
+            <div class="w-9 h-9 sm:w-11 sm:h-11 bg-amber-400 text-white rounded-xl flex items-center justify-center text-lg sm:text-2xl shadow">
+                <i class="fa-solid fa-bugs"></i>
+            </div>
+            <div>
+                <h1 class="text-base sm:text-xl font-extrabold text-sky-900 font-title leading-tight">Butterfly Bonds to 10</h1>
+                <p class="text-[10px] sm:text-xs text-sky-700 font-semibold">Drag matching wings to make 10!</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+            <!-- Audio Toggle -->
+            <button id="sound-btn" onclick="toggleSound()" class="w-9 h-9 sm:w-10 sm:h-10 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-xl flex items-center justify-center transition-all shadow-sm">
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+
+            <!-- Score Badge -->
+            <div class="bg-amber-100 border border-amber-300 px-3 py-1 rounded-xl flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-star text-amber-500 text-sm sm:text-base"></i>
+                <span class="text-xs sm:text-sm font-bold text-amber-900 font-num">
+                    <span id="score-text">0</span>/10
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="w-full max-w-4xl flex-1 flex flex-col items-center justify-between my-2 z-10 gap-2">
+
+        <!-- Progress Bar -->
+        <div class="w-full max-w-md bg-white/70 backdrop-blur-sm rounded-full h-3.5 p-0.5 border border-sky-200 shadow-inner">
+            <div id="progress-bar-fill" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 10%;"></div>
+        </div>
+
+        <!-- TOP SHELF: ALL 10 BUTTERFLIES LINED UP IN THE SKY -->
+        <div id="top-shelf-card" class="w-full bg-white/85 backdrop-blur-md rounded-3xl p-2.5 sm:p-3 shadow-lg border-2 border-sky-200/80 relative">
+            
+            <!-- Tutorial Callout Pointer (Only visible in tutorial mode) -->
+            <div id="tutorial-shelf-pointer" class="hidden absolute -bottom-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-950 font-extrabold text-xs px-3 py-1 rounded-full shadow-lg z-20 animate-bounce flex items-center gap-1">
+                <i class="fa-solid fa-hand-pointer"></i>
+                <span>Pick a butterfly from here!</span>
+            </div>
+
+            <div class="flex items-center justify-between px-2 mb-1">
+                <span class="text-xs font-bold text-sky-800 uppercase tracking-wide flex items-center gap-1">
+                    <i class="fa-solid fa-hand-pointer text-sky-500"></i>
+                    1. Drag a butterfly with missing spots:
+                </span>
+                <span id="shelf-mode-badge" class="text-[10px] bg-sky-100 text-sky-700 font-extrabold px-2 py-0.5 rounded-full">Lineup</span>
+            </div>
+
+            <!-- Top Shelf Draggable Butterfly Track -->
+            <div id="butterfly-shelf" class="flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 min-h-[75px] sm:min-h-[85px]">
+                <!-- Dynamic SVG options injected here -->
+            </div>
+        </div>
+
+        <!-- COMPLETED PAIRS GALLERY SHELF -->
+        <div class="w-full bg-emerald-50/80 backdrop-blur-sm rounded-2xl p-2 border border-emerald-200 shadow-sm flex items-center gap-2 overflow-x-auto no-scrollbar min-h-[48px]">
+            <span class="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wide flex items-center gap-1 shrink-0 px-1">
+                <i class="fa-solid fa-ribbon text-emerald-600"></i> Saved Pairs:
+            </span>
+            <div id="completed-pairs-gallery" class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full">
+                <span id="empty-gallery-msg" class="text-xs text-emerald-600/70 italic font-medium">Your completed pairs will fly here!</span>
+            </div>
+        </div>
+
+        <!-- MAIN INTERACTIVE GAME AREA -->
+        <div id="game-card" class="w-full bg-white/90 backdrop-blur-md rounded-3xl p-3 sm:p-5 shadow-xl border-2 border-sky-100 flex flex-col items-center gap-3 relative">
+
+            <!-- Question Indicator Header -->
+            <div class="flex items-center gap-2">
+                <span id="q-num-badge" class="bg-sky-100 text-sky-800 font-extrabold text-xs px-3 py-1 rounded-full border border-sky-200">
+                    Question <span id="current-q-num" class="font-num">1</span> of 10
+                </span>
+                <span id="progress-percent" class="text-xs font-extrabold text-amber-600 font-num">10%</span>
+            </div>
+
+            <!-- Math Question & Drop Zone Canvas -->
+            <div class="w-full flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 my-1">
+
+                <!-- Target Butterfly Box (Left) -->
+                <div class="flex flex-col items-center">
+                    <div class="text-xs font-extrabold text-slate-500 mb-1">Target Butterfly</div>
+                    <div class="w-44 h-36 sm:w-52 sm:h-44 bg-sky-50/80 rounded-3xl border-2 border-sky-200 flex flex-col items-center justify-center relative p-2 shadow-inner">
+                        <div id="target-butterfly-container" class="w-36 h-32 sm:w-44 sm:h-40 flex items-center justify-center animate-flutter">
+                            <!-- SVG injected here -->
+                        </div>
+                        <span class="absolute bottom-2 bg-sky-600 text-white font-extrabold text-xs px-2.5 py-0.5 rounded-full font-num shadow">
+                            <span id="target-spots-label">0</span> Spots
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Plus Sign Indicator -->
+                <div class="text-3xl sm:text-4xl font-extrabold text-amber-500 font-num">+</div>
+
+                <!-- Drop Target Slot Box (Right) -->
+                <div class="flex flex-col items-center">
+                    <div class="text-xs font-extrabold text-emerald-600 mb-1">Drag Answer Here</div>
+                    <div id="drop-zone" class="w-44 h-36 sm:w-52 sm:h-44 rounded-3xl border-4 border-dashed border-amber-400 bg-amber-50/80 drop-target-pulse flex flex-col items-center justify-center relative transition-all duration-200 cursor-pointer shadow-md">
+                        
+                        <!-- Empty Drop Placeholder -->
+                        <div id="drop-zone-placeholder" class="flex flex-col items-center justify-center text-amber-600 p-2 text-center pointer-events-none">
+                            <!-- Pulsing Arrow Indicator -->
+                            <div class="w-10 h-10 rounded-full bg-amber-200/80 text-amber-700 flex items-center justify-center mb-1 text-xl animate-bounce shadow-sm">
+                                <i class="fa-solid fa-arrow-down"></i>
+                            </div>
+                            <span class="text-xs font-extrabold text-amber-800 leading-tight">DROP BUTTERFLY<br>HERE</span>
+                        </div>
+
+                        <!-- Container for Dropped Butterfly -->
+                        <div id="dropped-butterfly-container" class="w-full h-full flex items-center justify-center p-2 hidden">
+                            <!-- SVG copied here on drop -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mathematical Equation Box -->
+            <div class="bg-amber-100/90 border-2 border-amber-300 rounded-2xl px-5 py-2 flex items-center gap-3 text-2xl sm:text-3xl font-extrabold text-amber-900 font-num shadow-sm">
+                <span id="num-target">?</span>
+                <span>+</span>
+                <span id="equation-slot-indicator" class="w-10 h-10 sm:w-14 sm:h-14 bg-amber-200 border-3 border-dashed border-amber-400 rounded-xl flex items-center justify-center text-amber-700 animate-pulse">?</span>
+                <span>=</span>
+                <span class="text-emerald-700 underline decoration-wavy decoration-emerald-400">10</span>
+            </div>
+
+            <!-- Fill-in-the-blank Written Word Sentence Below Equation -->
+            <div id="word-sentence-container" class="text-xs sm:text-base font-bold text-slate-700 text-center bg-slate-100/90 px-4 py-1.5 rounded-xl border border-slate-200 shadow-xs">
+                <span id="word-target" class="text-amber-800 font-extrabold font-num">___</span>
+                <span>and</span>
+                <span id="word-result" class="px-2 py-0.5 bg-amber-200 text-amber-900 rounded-lg border border-amber-300 font-extrabold font-num mx-1">___</span>
+                <span>make Ten</span>
+            </div>
+
+            <!-- Feedback Banner -->
+            <div id="feedback-banner" class="w-full p-3 rounded-2xl text-center font-bold text-base sm:text-lg hidden transition-all duration-300">
+                <!-- Injected via JavaScript -->
+            </div>
+
+            <!-- Skip / Come Back Later Button (Appears after 5 wrong attempts) -->
+            <button id="skip-btn" onclick="skipQuestionForLater()" class="hidden w-full max-w-xs bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-500 hover:to-blue-600 text-white border-2 border-sky-400 font-extrabold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 my-1 transform hover:-translate-y-0.5">
+                <i class="fa-solid fa-clock-rotate-left text-white"></i>
+                <span>Come back to this later</span>
+            </button>
+
+            <!-- Next Question / Start Game Button -->
+            <button id="next-btn" onclick="nextQuestion()" class="hidden w-full max-w-xs bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-base sm:text-lg py-3 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+                <span id="next-btn-text">Next Question</span>
+                <i id="next-btn-icon" class="fa-solid fa-circle-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- END OF GAME RESULTS SUMMARY CARD -->
+        <div id="summary-card" class="hidden w-full bg-white/95 backdrop-blur-md rounded-3xl p-5 sm:p-8 shadow-2xl border-4 border-amber-300 flex flex-col items-center text-center gap-4">
+            <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-4xl text-amber-500 shadow-inner animate-bounce">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-sky-900 font-title">Splendid Job!</h2>
+                <p class="text-xs sm:text-sm text-slate-600 mt-1">You discovered number bonds to 10 with butterflies!</p>
+            </div>
+
+            <!-- Star Rating Display -->
+            <div id="star-rating" class="flex items-center gap-2 text-3xl sm:text-4xl">
+                <i class="fa-solid fa-star text-amber-400"></i>
+                <i class="fa-solid fa-star text-amber-400"></i>
+                <i class="fa-solid fa-star text-amber-400"></i>
+            </div>
+
+            <!-- Final Score Box -->
+            <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3 w-full max-w-sm">
+                <div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Final Score</div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-sky-700 font-num"><span id="final-score">0</span> / 10</div>
+                <div id="summary-feedback" class="text-xs text-sky-600 mt-1 font-semibold">Super mathematical butterfly gardener!</div>
+                
+                <!-- Dynamic Duolingo-Style Correction Review Button Container -->
+                <div id="corrections-btn-container" class="w-full"></div>
+            </div>
+
+            <!-- Full Sky Display of All Number Bonds -->
+            <div class="w-full border-t border-slate-200 pt-3">
+                <h3 class="text-xs sm:text-sm font-extrabold text-sky-900 mb-2 uppercase tracking-wide">
+                    <i class="fa-solid fa-cloud-sun text-amber-500 mr-1"></i> Your Complete Bonds Sky
+                </h3>
+                <p class="text-[10px] sm:text-xs text-sky-600 font-semibold mb-2">Click any bond to inspect butterfly spots!</p>
+                <div id="final-bonds-sky" class="grid grid-cols-2 sm:grid-cols-5 gap-2 w-full max-h-48 overflow-y-auto p-1 bg-sky-50/50 rounded-2xl border border-sky-100">
+                    <!-- Dynamic Sky Bonds Injected Here -->
+                </div>
+            </div>
+
+            <!-- Restart Button -->
+            <button onclick="initGame()" class="w-full max-w-xs bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-extrabold text-base sm:text-lg py-3 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>Play Again</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- MAGNIFIED BOND INSPECTOR MODAL -->
+    <div id="bond-inspector-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-5 sm:p-7 max-w-xl w-full shadow-2xl border-4 border-amber-300 flex flex-col items-center relative text-center animate-bounce-short">
+            
+            <!-- Close Button -->
+            <button onclick="closeBondInspector()" class="absolute top-3 right-3 w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full flex items-center justify-center text-lg transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Modal Title -->
+            <h3 class="text-lg sm:text-2xl font-extrabold text-sky-900 font-title mb-1">
+                Number Bond Detail
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-600 mb-4 font-semibold">Count all spots to make Ten!</p>
+
+            <!-- Large Butterflies Display Equation: A + B = 10 -->
+            <div class="w-full flex items-center justify-around gap-1 sm:gap-2 my-2 bg-sky-50/80 p-3 sm:p-4 rounded-2xl border-2 border-sky-100">
+                
+                <!-- Left Butterfly -->
+                <div class="flex flex-col items-center">
+                    <div id="modal-b1-svg" class="w-20 h-16 sm:w-28 sm:h-24 animate-flutter"></div>
+                    <span id="modal-b1-label" class="mt-1 bg-amber-400 text-amber-950 font-extrabold text-xs sm:text-sm px-2.5 py-0.5 rounded-full font-num shadow-xs">0 Spots</span>
+                </div>
+
+                <div class="text-2xl sm:text-4xl font-extrabold text-amber-500 font-num">+</div>
+
+                <!-- Right Butterfly -->
+                <div class="flex flex-col items-center">
+                    <div id="modal-b2-svg" class="w-20 h-16 sm:w-28 sm:h-24 animate-flutter"></div>
+                    <span id="modal-b2-label" class="mt-1 bg-emerald-500 text-white font-extrabold text-xs sm:text-sm px-2.5 py-0.5 rounded-full font-num shadow-xs">0 Spots</span>
+                </div>
+
+                <div class="text-2xl sm:text-4xl font-extrabold text-emerald-600 font-num">=</div>
+
+                <!-- Full Ten Target Butterfly -->
+                <div class="flex flex-col items-center">
+                    <div id="modal-ten-svg" class="w-20 h-16 sm:w-28 sm:h-24 animate-flutter"></div>
+                    <span class="mt-1 bg-sky-600 text-white font-extrabold text-xs sm:text-sm px-2.5 py-0.5 rounded-full font-num shadow-xs">10 Spots</span>
+                </div>
+            </div>
+
+            <!-- Full Equation & Word Form Display -->
+            <div id="modal-equation-text" class="text-lg sm:text-2xl font-extrabold text-amber-900 font-num my-2 bg-amber-100/80 border border-amber-300 px-4 py-1.5 rounded-xl">
+                0 + 10 = 10
+            </div>
+            
+            <div id="modal-words-text" class="text-xs sm:text-base font-bold text-slate-700 mb-3">
+                Zero and Ten make Ten
+            </div>
+
+            <button onclick="closeBondInspector()" class="bg-sky-500 hover:bg-sky-600 text-white font-extrabold px-6 py-2 rounded-xl text-sm shadow transition-all">
+                Close View
+            </button>
+        </div>
+    </div>
+
+    <!-- DISCREET SUBTLE HINT BUTTON IN BOTTOM RIGHT CORNER -->
+    <div id="hint-container" class="fixed bottom-3 right-3 z-30 hidden">
+        <!-- Floating Small Help Icon (Slightly larger for small hands) -->
+        <button id="hint-trigger-btn" onclick="revealHint()" class="bg-white/95 hover:bg-white text-slate-700 border-2 border-slate-300 shadow-lg rounded-full px-4 py-2 flex items-center gap-2 text-sm font-extrabold transition-all hover:scale-105 active:scale-95">
+            <i class="fa-solid fa-hand text-amber-500 text-base"></i>
+            <span>HELP</span>
+        </button>
+
+        <!-- Revealed Text Hint -->
+        <div id="hint-text-box" class="hidden bg-white border-2 border-amber-300 shadow-xl rounded-2xl p-2.5 max-w-xs text-center flex flex-col items-center gap-1">
+            <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Need a hint?</div>
+            <div class="text-xs font-bold text-slate-700">
+                You need the number <span id="hint-word-display" class="text-amber-800 font-extrabold font-num underline decoration-amber-400">Nine</span>!
+            </div>
+            <button onclick="document.getElementById('hint-container').classList.add('hidden')" class="mt-1 text-[10px] text-slate-400 hover:text-slate-600 underline">Close</button>
+        </div>
+    </div>
+
+    <!-- Grass & Flower Bottom Decorative Footer -->
+    <footer class="w-full max-w-4xl text-center py-1 text-[11px] font-semibold text-sky-800/80 z-10 flex items-center justify-center gap-2">
+        <span>🌸 Match butterfly spots to equal 10 🌸</span>
+    </footer>
+
+    <!-- JavaScript Logic Engine -->
+    <script>
+        /* ==========================================================================
+           1. CONSTANTS & STATE MANAGEMENT
+           ========================================================================== */
+        
+        // Comprehensive Number Bonds to 10
+        const NUMBER_BONDS = [
+            { target: 1, required: 9 },
+            { target: 2, required: 8 },
+            { target: 3, required: 7 },
+            { target: 4, required: 6 },
+            { target: 5, required: 5 },
+            { target: 6, required: 4 },
+            { target: 7, required: 3 },
+            { target: 8, required: 2 },
+            { target: 9, required: 1 },
+            { target: 0, required: 10 }
+        ];
+
+        // Example Question Object for Tutorial Mode
+        const EXAMPLE_QUESTION = { target: 4, required: 6 };
+
+        // Number Words Mapping with Title Case Capitalization
+        const NUMBER_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+
+        /* Deterministic Color Palettes for Butterflies (Matched strictly by spot count) */
+        const PALETTES = [
+            { main: '#e11d48', inner: '#fca5a5', spots: '#ffffff', body: '#4c0519' }, // Vibrant Rose
+            { main: '#0284c7', inner: '#7dd3fc', spots: '#ffffff', body: '#0c4a6e' }, // Vivid Cyan Blue
+            { main: '#059669', inner: '#6ee7b7', spots: '#ffffff', body: '#064e3b' }, // Emerald Green
+            { main: '#d97706', inner: '#fde047', spots: '#ffffff', body: '#451a03' }, // Amber Gold
+            { main: '#7c3aed', inner: '#ddd6fe', spots: '#ffffff', body: '#2e1065' }, // Bright Purple
+            { main: '#db2777', inner: '#fbcfe8', spots: '#ffffff', body: '#500724' }, // Deep Pink
+            { main: '#2563eb', inner: '#93c5fd', spots: '#ffffff', body: '#1e3a8a' }, // Deep Blue
+            { main: '#65a30d', inner: '#bef264', spots: '#ffffff', body: '#1a2e05' }  // Bright Lime
+        ];
+
+        // Return deterministic palette for a specific spot count
+        function getPaletteIndexForNumber(num) {
+            return num % PALETTES.length;
+        }
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let soundEnabled = true;
+        let roundQuestions = [];
+        let isAnswered = false;
+
+        // Tutorial / Example Mode State
+        let isTutorialMode = true;
+
+        // Wrong attempt tracking for skip button threshold (5 wrong attempts)
+        let consecutiveWrongAttempts = 0;
+
+        // Skip limit tracking (max 5 consecutive skips in a row)
+        let consecutiveSkips = 0;
+
+        // Duolingo-style Corrections Engine State
+        let missedQuestions = [];
+        let isCorrectionMode = false;
+        let currentCorrectionIndex = 0;
+
+        // Touch Dragging State
+        let activeDragElement = null;
+        let dragClone = null;
+
+        /* ==========================================================================
+           2. AUDIO SYNTHESIZER (Web Audio API)
+           ========================================================================== */
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioContext();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(160, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'win') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch (e) {
+                console.log("Audio not supported yet.");
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            icon.className = soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-slate-400';
+        }
+
+        /* ==========================================================================
+           3. DYNAMIC VECTOR SVG BUTTERFLY GENERATOR (PRECISE SPOT PLACEMENT)
+           ========================================================================== */
+        function generateButterflySVG(spotCount, explicitPaletteIdx = null) {
+            const paletteIdx = explicitPaletteIdx !== null ? explicitPaletteIdx : getPaletteIndexForNumber(spotCount);
+            const palette = PALETTES[paletteIdx];
+
+            // Define coordinates positioned strictly within the wing shapes (away from head/antennae/body)
+            const leftWingCoords = [
+                { cx: 28, cy: 38 }, // Upper wing - outer top
+                { cx: 38, cy: 45 }, // Upper wing - inner mid
+                { cx: 22, cy: 50 }, // Upper wing - outer mid
+                { cx: 33, cy: 72 }, // Lower wing - center top
+                { cx: 27, cy: 78 }  // Lower wing - center bottom
+            ];
+
+            const rightWingCoords = [
+                { cx: 72, cy: 38 }, // Upper wing - outer top
+                { cx: 62, cy: 45 }, // Upper wing - inner mid
+                { cx: 78, cy: 50 }, // Upper wing - outer mid
+                { cx: 67, cy: 72 }, // Lower wing - center top
+                { cx: 73, cy: 78 }  // Lower wing - center bottom
+            ];
+
+            let spotsHTML = '';
+            if (spotCount > 0) {
+                const spotsLeft = Math.ceil(spotCount / 2);
+                const spotsRight = Math.floor(spotCount / 2);
+
+                // Render left wing spots matching precise count with high contrast outlines & drop shadows
+                for (let i = 0; i < spotsLeft && i < leftWingCoords.length; i++) {
+                    const pos = leftWingCoords[i];
+                    spotsHTML += `
+                        <circle cx="${pos.cx}" cy="${pos.cy}" r="4.2" fill="#ffffff" stroke="#0f172a" stroke-width="1.8" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.3))"/>
+                        <circle cx="${pos.cx - 1}" cy="${pos.cy - 1}" r="1.3" fill="#f8fafc" opacity="0.9"/>
+                    `;
+                }
+
+                // Render right wing spots matching precise count with high contrast outlines & drop shadows
+                for (let i = 0; i < spotsRight && i < rightWingCoords.length; i++) {
+                    const pos = rightWingCoords[i];
+                    spotsHTML += `
+                        <circle cx="${pos.cx}" cy="${pos.cy}" r="4.2" fill="#ffffff" stroke="#0f172a" stroke-width="1.8" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.3))"/>
+                        <circle cx="${pos.cx - 1}" cy="${pos.cy - 1}" r="1.3" fill="#f8fafc" opacity="0.9"/>
+                    `;
+                }
+            }
+
+            return `
+                <svg viewBox="0 0 100 100" class="w-full h-full butterfly-shadow">
+                    <!-- Left Upper Wing -->
+                    <path d="M 48 45 C 20 15, 0 35, 12 60 C 25 75, 48 55, 48 45 Z" fill="${palette.main}" stroke="#0f172a" stroke-width="1.2"/>
+                    <path d="M 45 45 C 25 23, 10 38, 18 55 C 28 66, 45 52, 45 45 Z" fill="${palette.inner}"/>
+                    
+                    <!-- Right Upper Wing -->
+                    <path d="M 52 45 C 80 15, 100 35, 88 60 C 75 75, 52 55, 52 45 Z" fill="${palette.main}" stroke="#0f172a" stroke-width="1.2"/>
+                    <path d="M 55 45 C 75 23, 90 38, 82 55 C 72 66, 55 52, 55 45 Z" fill="${palette.inner}"/>
+
+                    <!-- Left Lower Wing -->
+                    <path d="M 47 52 C 25 55, 10 75, 28 88 C 42 95, 48 65, 47 52 Z" fill="${palette.main}" stroke="#0f172a" stroke-width="1.2"/>
+                    <!-- Right Lower Wing -->
+                    <path d="M 53 52 C 75 55, 90 75, 72 88 C 58 95, 52 65, 53 52 Z" fill="${palette.main}" stroke="#0f172a" stroke-width="1.2"/>
+
+                    <!-- High Contrast Spots (Positioned Exclusively on Wing Surfaces) -->
+                    ${spotsHTML}
+
+                    <!-- Antennae -->
+                    <path d="M 47 32 Q 40 18, 32 15" stroke="${palette.body}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <circle cx="31" cy="14" r="2.8" fill="${palette.body}"/>
+                    
+                    <path d="M 53 32 Q 60 18, 68 15" stroke="${palette.body}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <circle cx="69" cy="14" r="2.8" fill="${palette.body}"/>
+
+                    <!-- Body -->
+                    <ellipse cx="50" cy="50" rx="4.8" ry="22" fill="${palette.body}" stroke="#0f172a" stroke-width="0.8"/>
+                    <!-- Head -->
+                    <circle cx="50" cy="31" r="5.2" fill="${palette.body}"/>
+                </svg>
+            `;
+        }
+
+        /* ==========================================================================
+           4. GAME LOGIC & SHELF GENERATION
+           ========================================================================== */
+
+        function initGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            isAnswered = false;
+            isTutorialMode = true; // Start with tutorial example
+            consecutiveWrongAttempts = 0;
+            consecutiveSkips = 0;
+            missedQuestions = [];
+            isCorrectionMode = false;
+            currentCorrectionIndex = 0;
+
+            const shuffled = [...NUMBER_BONDS].sort(() => Math.random() - 0.5);
+            roundQuestions = shuffled.slice(0, 10);
+
+            document.getElementById('score-text').textContent = score;
+            document.getElementById('summary-card').classList.add('hidden');
+            document.getElementById('game-card').classList.remove('hidden');
+
+            // Reset Completed Pairs Gallery
+            const gallery = document.getElementById('completed-pairs-gallery');
+            gallery.innerHTML = '<span id="empty-gallery-msg" class="text-xs text-emerald-600/70 italic font-medium">Your completed pairs will fly here!</span>';
+
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            isAnswered = false;
+            consecutiveWrongAttempts = 0;
+            
+            // Hide Skip button on render
+            const skipBtn = document.getElementById('skip-btn');
+            if (skipBtn) {
+                skipBtn.classList.add('hidden');
+                skipBtn.disabled = false;
+                skipBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Determine active question object
+            let currentQ;
+            const progressPercentEl = document.getElementById('progress-percent');
+            const tutorialPointer = document.getElementById('tutorial-shelf-pointer');
+
+            if (isTutorialMode) {
+                currentQ = EXAMPLE_QUESTION;
+                document.getElementById('current-q-num').textContent = "Example";
+                document.getElementById('q-num-badge').className = "bg-amber-100 text-amber-900 font-extrabold text-xs px-3 py-1 rounded-full border border-amber-300 animate-pulse";
+                document.getElementById('progress-bar-fill').style.width = `0%`;
+                progressPercentEl.textContent = `Practice`;
+                progressPercentEl.className = "text-xs font-extrabold text-amber-600 font-num";
+                if (tutorialPointer) tutorialPointer.classList.remove('hidden');
+            } else if (isCorrectionMode) {
+                currentQ = missedQuestions[currentCorrectionIndex];
+                document.getElementById('current-q-num').textContent = `Review ${currentCorrectionIndex + 1}`;
+                document.getElementById('q-num-badge').className = "bg-purple-100 text-purple-900 font-extrabold text-xs px-3 py-1 rounded-full border border-purple-300";
+                const percent = Math.round(((currentCorrectionIndex + 1) / missedQuestions.length) * 100);
+                document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+                progressPercentEl.textContent = `Review Mode`;
+                progressPercentEl.className = "text-xs font-extrabold text-purple-600 font-num";
+                if (tutorialPointer) tutorialPointer.classList.add('hidden');
+            } else {
+                currentQ = roundQuestions[currentQuestionIndex];
+                const qNumber = currentQuestionIndex + 1;
+                document.getElementById('current-q-num').textContent = qNumber;
+                document.getElementById('q-num-badge').className = "bg-sky-100 text-sky-800 font-extrabold text-xs px-3 py-1 rounded-full border border-sky-200";
+                const percent = Math.min(100, Math.round((qNumber / roundQuestions.length) * 100));
+                document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+                progressPercentEl.textContent = `${percent}%`;
+                if (tutorialPointer) tutorialPointer.classList.add('hidden');
+
+                if (percent <= 20) {
+                    progressPercentEl.className = "text-xs font-extrabold text-rose-500 font-num transition-colors duration-500";
+                } else if (percent <= 40) {
+                    progressPercentEl.className = "text-xs font-extrabold text-amber-600 font-num transition-colors duration-500";
+                } else if (percent <= 70) {
+                    progressPercentEl.className = "text-xs font-extrabold text-lime-600 font-num transition-colors duration-500";
+                } else {
+                    progressPercentEl.className = "text-xs font-extrabold text-emerald-600 font-num transition-colors duration-500 animate-pulse";
+                }
+            }
+
+            const targetNum = currentQ.target;
+
+            // Equation Display
+            document.getElementById('num-target').textContent = targetNum;
+            const eqBox = document.getElementById('equation-slot-indicator');
+            eqBox.textContent = '?';
+            eqBox.className = "w-10 h-10 sm:w-14 sm:h-14 bg-amber-200 border-3 border-dashed border-amber-400 rounded-xl flex items-center justify-center text-amber-700 animate-pulse font-bold";
+
+            // Reset Word Sentence Below Equation
+            document.getElementById('word-target').textContent = NUMBER_WORDS[targetNum];
+            const wordResult = document.getElementById('word-result');
+            wordResult.textContent = "___";
+            wordResult.className = "px-2.5 py-0.5 bg-amber-200 text-amber-900 rounded-lg border border-amber-300 font-extrabold font-num";
+
+            // Render Target Butterfly (Left) using deterministic color matching
+            document.getElementById('target-spots-label').textContent = targetNum;
+            const targetContainer = document.getElementById('target-butterfly-container');
+            targetContainer.innerHTML = generateButterflySVG(targetNum);
+            targetContainer.className = "w-36 h-32 sm:w-44 sm:h-40 flex items-center justify-center animate-flutter transition-all duration-500";
+
+            // Drop zone state reset
+            document.getElementById('drop-zone-placeholder').classList.remove('hidden');
+            const droppedContainer = document.getElementById('dropped-butterfly-container');
+            droppedContainer.classList.add('hidden');
+            droppedContainer.className = "w-full h-full flex items-center justify-center p-2 hidden transition-all duration-500";
+            droppedContainer.innerHTML = '';
+            
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.className = "w-44 h-36 sm:w-52 sm:h-44 rounded-3xl border-4 border-dashed border-amber-400 bg-amber-50/80 drop-target-pulse flex flex-col items-center justify-center relative transition-all duration-200 cursor-pointer shadow-md";
+
+            // Feedback & Next button reset
+            const feedbackBanner = document.getElementById('feedback-banner');
+            
+            if (isTutorialMode) {
+                feedbackBanner.className = 'w-full p-2.5 rounded-2xl text-center font-bold text-xs sm:text-sm bg-amber-100 text-amber-950 border-2 border-amber-400 block mb-1 animate-pulse';
+                feedbackBanner.innerHTML = `<i class="fa-solid fa-graduation-cap text-amber-600 mr-1.5"></i> <strong>Example Question:</strong> Target is <strong>4</strong>. Count up spots to 10! Drag <strong>6</strong> to answer.`;
+            } else if (isCorrectionMode) {
+                feedbackBanner.className = 'w-full p-2.5 rounded-2xl text-center font-bold text-xs sm:text-sm bg-purple-100 text-purple-900 border-2 border-purple-300 block mb-1';
+                feedbackBanner.innerHTML = `<i class="fa-solid fa-lightbulb text-purple-600 mr-1.5"></i> <strong>Practice Mode:</strong> Count up from <strong>${targetNum}</strong> to <strong>10</strong> to find the missing spots!`;
+            } else {
+                feedbackBanner.className = 'w-full p-3 rounded-2xl text-center font-bold text-base sm:text-lg hidden transition-all duration-300';
+            }
+            
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.classList.add('hidden');
+            document.getElementById('next-btn-text').textContent = isTutorialMode ? "Start Game!" : "Next Question";
+
+            // Reset Hint Box (Hide on new question)
+            document.getElementById('hint-container').classList.add('hidden');
+            document.getElementById('hint-text-box').classList.add('hidden');
+            document.getElementById('hint-trigger-btn').classList.remove('hidden');
+
+            // Build Top Shelf Options
+            renderTopShelfOptions();
+        }
+
+        function revealHint() {
+            playSound('pop');
+            const currentQ = isTutorialMode ? EXAMPLE_QUESTION : (isCorrectionMode ? missedQuestions[currentCorrectionIndex] : roundQuestions[currentQuestionIndex]);
+            const wordNeeded = NUMBER_WORDS[currentQ.required];
+            
+            document.getElementById('hint-word-display').textContent = wordNeeded;
+            document.getElementById('hint-trigger-btn').classList.add('hidden');
+            document.getElementById('hint-text-box').classList.remove('hidden');
+        }
+
+        function renderTopShelfOptions() {
+            const currentQ = isTutorialMode ? EXAMPLE_QUESTION : (isCorrectionMode ? missedQuestions[currentCorrectionIndex] : roundQuestions[currentQuestionIndex]);
+            const targetVal = currentQ.target;
+            const correctVal = currentQ.required;
+
+            let optionsToDisplay = [];
+
+            if (isTutorialMode) {
+                // In Tutorial Mode: Show 3 easy choices (e.g., 2, 6, 8) with 6 highlighted
+                optionsToDisplay = [2, 6, 8];
+            } else if (isCorrectionMode) {
+                // In Correction Mode: Show 3 options (Correct answer + 2 random distractors)
+                const candidates = [];
+                for (let i = 0; i <= 10; i++) {
+                    if (i === correctVal) continue;
+                    if (targetVal !== 5 && i === targetVal) continue;
+                    candidates.push(i);
+                }
+                candidates.sort(() => Math.random() - 0.5);
+                const selectedDistractors = candidates.slice(0, 2);
+                optionsToDisplay = [correctVal, ...selectedDistractors];
+                optionsToDisplay.sort(() => Math.random() - 0.5);
+            } else {
+                // Regular Mode: Show all numbers 1-10
+                optionsToDisplay = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+                if (currentQ.required === 0 && !optionsToDisplay.includes(0)) {
+                    optionsToDisplay.unshift(0);
+                }
+            }
+
+            const shelf = document.getElementById('butterfly-shelf');
+            shelf.innerHTML = '';
+
+            optionsToDisplay.forEach((optValue) => {
+                const paletteIdx = getPaletteIndexForNumber(optValue);
+                
+                const wrapper = document.createElement('div');
+                const isTutorialHighlight = isTutorialMode && optValue === correctVal;
+                
+                wrapper.className = `butterfly-draggable flex flex-col items-center cursor-grab active:cursor-grabbing p-1 rounded-xl bg-white/80 hover:bg-white border-2 ${isTutorialHighlight ? 'border-amber-400 ring-4 ring-amber-300 animate-pulse scale-105' : 'border-sky-100'} shadow-sm transition-all`;
+                wrapper.setAttribute('draggable', 'true');
+                wrapper.setAttribute('data-value', optValue);
+                wrapper.setAttribute('data-palette', paletteIdx);
+
+                wrapper.innerHTML = `
+                    <div class="w-12 h-10 sm:w-16 sm:h-14 pointer-events-none">
+                        ${generateButterflySVG(optValue, paletteIdx)}
+                    </div>
+                    <span class="mt-0.5 bg-sky-100 text-sky-800 font-extrabold px-1.5 py-0.2 rounded-md text-[10px] sm:text-xs font-num pointer-events-none">
+                        ${optValue}
+                    </span>
+                `;
+
+                attachDragListeners(wrapper);
+                shelf.appendChild(wrapper);
+            });
+        }
+
+        /* ==========================================================================
+           5. DRAG AND DROP HANDLERS (HTML5 + TOUCH COMPATIBLE)
+           ========================================================================== */
+
+        function attachDragListeners(elem) {
+            // HTML5 Drag Events for Desktop
+            elem.addEventListener('dragstart', (e) => {
+                if (isAnswered) {
+                    e.preventDefault();
+                    return;
+                }
+                const val = elem.getAttribute('data-value');
+                const palette = elem.getAttribute('data-palette');
+                e.dataTransfer.setData('text/plain', JSON.stringify({ value: parseInt(val), palette: parseInt(palette) }));
+                elem.classList.add('opacity-40');
+                playSound('pop');
+            });
+
+            elem.addEventListener('dragend', () => {
+                elem.classList.remove('opacity-40');
+            });
+
+            // Touch Events for Tablets & Mobile
+            elem.addEventListener('touchstart', handleTouchStart, { passive: false });
+            elem.addEventListener('touchmove', handleTouchMove, { passive: false });
+            elem.addEventListener('touchend', handleTouchEnd, { passive: false });
+        }
+
+        // Setup Drop Target Zone
+        const dropTargetZone = document.getElementById('drop-zone');
+
+        dropTargetZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropTargetZone.classList.add('bg-amber-100', 'scale-105');
+        });
+
+        dropTargetZone.addEventListener('dragleave', () => {
+            dropTargetZone.classList.remove('bg-amber-100', 'scale-105');
+        });
+
+        dropTargetZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropTargetZone.classList.remove('bg-amber-100', 'scale-105');
+            
+            if (isAnswered) return;
+
+            try {
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const draggedElem = document.querySelector(`.butterfly-draggable[data-value="${data.value}"]`);
+                evaluateAttempt(data.value, data.palette, draggedElem);
+            } catch (err) {
+                console.error("Invalid drop data");
+            }
+        });
+
+        // Touch Interaction Logic
+        function handleTouchStart(e) {
+            if (isAnswered) return;
+            activeDragElement = e.currentTarget;
+            const touch = e.touches[0];
+
+            dragClone = activeDragElement.cloneNode(true);
+            dragClone.style.position = 'fixed';
+            dragClone.style.left = `${touch.clientX - 35}px`;
+            dragClone.style.top = `${touch.clientY - 35}px`;
+            dragClone.style.width = '70px';
+            dragClone.style.zIndex = '1000';
+            dragClone.style.pointerEvents = 'none';
+            dragClone.style.opacity = '0.9';
+
+            document.body.appendChild(dragClone);
+            activeDragElement.classList.add('opacity-40');
+            playSound('pop');
+        }
+
+        function handleTouchMove(e) {
+            if (!dragClone) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            dragClone.style.left = `${touch.clientX - 35}px`;
+            dragClone.style.top = `${touch.clientY - 35}px`;
+        }
+
+        function handleTouchEnd(e) {
+            if (!dragClone || !activeDragElement) return;
+
+            const touch = e.changedTouches[0];
+            const dropRect = dropTargetZone.getBoundingClientRect();
+
+            activeDragElement.classList.remove('opacity-40');
+
+            // Check if dropped inside target drop zone
+            if (
+                touch.clientX >= dropRect.left &&
+                touch.clientX <= dropRect.right &&
+                touch.clientY >= dropRect.top &&
+                touch.clientY <= dropRect.bottom
+            ) {
+                const val = parseInt(activeDragElement.getAttribute('data-value'));
+                const palette = parseInt(activeDragElement.getAttribute('data-palette'));
+                evaluateAttempt(val, palette, activeDragElement);
+            }
+
+            if (dragClone && dragClone.parentNode) {
+                dragClone.parentNode.removeChild(dragClone);
+            }
+            dragClone = null;
+            activeDragElement = null;
+        }
+
+        /* ==========================================================================
+           6. ATTEMPT EVALUATION & ANIMATION
+           ========================================================================== */
+
+        function evaluateAttempt(selectedValue, paletteIdx, sourceElement) {
+            if (isAnswered) return;
+
+            const currentQ = isTutorialMode ? EXAMPLE_QUESTION : (isCorrectionMode ? missedQuestions[currentCorrectionIndex] : roundQuestions[currentQuestionIndex]);
+            const targetVal = currentQ.target;
+            const requiredVal = currentQ.required;
+            const feedbackBanner = document.getElementById('feedback-banner');
+
+            if (selectedValue === requiredVal) {
+                // --- SUCCESSFUL MATCH ---
+                isAnswered = true;
+                consecutiveWrongAttempts = 0;
+                consecutiveSkips = 0;
+
+                const skipBtn = document.getElementById('skip-btn');
+                if (skipBtn) skipBtn.classList.add('hidden');
+
+                if (!isCorrectionMode && !isTutorialMode) {
+                    score++;
+                    document.getElementById('score-text').textContent = score;
+                }
+
+                playSound('correct');
+
+                confetti({
+                    particleCount: 70,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+
+                // Remove tutorial pointer if visible
+                const tutorialPointer = document.getElementById('tutorial-shelf-pointer');
+                if (tutorialPointer) tutorialPointer.classList.add('hidden');
+
+                // Remove placeholder and inject dropped butterfly into target slot
+                document.getElementById('drop-zone-placeholder').classList.add('hidden');
+                const droppedContainer = document.getElementById('dropped-butterfly-container');
+                droppedContainer.classList.remove('hidden');
+                droppedContainer.innerHTML = generateButterflySVG(selectedValue, paletteIdx);
+
+                // Update Drop Zone Styling
+                const dropZone = document.getElementById('drop-zone');
+                dropZone.className = "w-44 h-36 sm:w-52 sm:h-44 rounded-3xl border-4 border-emerald-500 bg-emerald-100/90 flex flex-col items-center justify-center relative shadow-lg transform scale-105 transition-all";
+
+                // Update Math Equation Box & Word Sentence
+                const eqBox = document.getElementById('equation-slot-indicator');
+                eqBox.textContent = selectedValue;
+                eqBox.className = "w-10 h-10 sm:w-14 sm:h-14 bg-emerald-500 text-white border-2 border-emerald-600 rounded-xl flex items-center justify-center font-extrabold font-num text-xl sm:text-2xl shadow";
+
+                const wordResult = document.getElementById('word-result');
+                wordResult.textContent = NUMBER_WORDS[selectedValue];
+                wordResult.className = "px-2.5 py-0.5 bg-emerald-500 text-white rounded-lg border border-emerald-600 font-extrabold font-num";
+
+                // Trigger Fly-Away Animation & Add Pair to Completed Gallery
+                setTimeout(() => {
+                    flyPairToGallery(targetVal, selectedValue);
+                }, 400);
+
+                // Feedback Banner
+                feedbackBanner.className = 'w-full p-3 rounded-2xl text-center font-bold text-base sm:text-lg bg-emerald-100 text-emerald-900 border-2 border-emerald-400 block animate-bounce';
+                
+                if (isTutorialMode) {
+                    feedbackBanner.innerHTML = `<i class="fa-solid fa-star text-amber-500 mr-1.5"></i> Great job! You now know how to play. Ready for the game?`;
+                } else {
+                    feedbackBanner.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> ${isCorrectionMode ? 'Awesome review!' : 'Perfect match!'} <strong>${NUMBER_WORDS[targetVal]}</strong> and <strong>${NUMBER_WORDS[selectedValue]}</strong> make <strong>Ten</strong>! (${targetVal} + ${selectedValue} = 10)`;
+                }
+
+                // Hide hint container if active
+                document.getElementById('hint-container').classList.add('hidden');
+
+                // Remove matching butterfly from top shelf
+                if (sourceElement && sourceElement.parentNode) {
+                    sourceElement.classList.add('opacity-0', 'scale-50');
+                    setTimeout(() => sourceElement.remove(), 200);
+                }
+
+                // Show Next / Start Button
+                const nextBtn = document.getElementById('next-btn');
+                document.getElementById('next-btn-text').textContent = isTutorialMode ? "Start Game!" : "Next Question";
+                nextBtn.classList.remove('hidden');
+
+            } else {
+                // --- INCORRECT MATCH ---
+                playSound('wrong');
+                consecutiveWrongAttempts++;
+
+                if (!isCorrectionMode && !isTutorialMode) {
+                    const alreadyTracked = missedQuestions.some(m => m.target === currentQ.target);
+                    if (!alreadyTracked) {
+                        missedQuestions.push(currentQ);
+                    }
+                }
+
+                if (sourceElement) {
+                    sourceElement.classList.add('animate-bounce');
+                    setTimeout(() => sourceElement.classList.remove('animate-bounce'), 600);
+                }
+
+                document.getElementById('hint-container').classList.remove('hidden');
+
+                if (consecutiveWrongAttempts >= 5 && !isCorrectionMode && !isTutorialMode) {
+                    const skipBtn = document.getElementById('skip-btn');
+                    if (skipBtn) {
+                        skipBtn.classList.remove('hidden');
+                        if (consecutiveSkips >= 5) {
+                            skipBtn.disabled = true;
+                            skipBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                            skipBtn.querySelector('span').textContent = "Give this one a try first!";
+                        } else {
+                            skipBtn.disabled = false;
+                            skipBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            skipBtn.querySelector('span').textContent = "Come back to this later";
+                        }
+                    }
+                }
+
+                feedbackBanner.className = 'w-full p-3 rounded-2xl text-center font-bold text-xs sm:text-sm bg-amber-100 text-amber-900 border-2 border-amber-300 block';
+                feedbackBanner.innerHTML = `
+                    <div class="flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-left text-amber-600 text-lg"></i>
+                        <span>Not quite! Have another go and drag a different butterfly!</span>
+                    </div>
+                `;
+            }
+        }
+
+        /* Skip question to come back to as the final question */
+        function skipQuestionForLater() {
+            if (isCorrectionMode || isTutorialMode) return;
+            if (consecutiveSkips >= 5) return;
+
+            playSound('pop');
+            consecutiveSkips++;
+
+            const currentQ = roundQuestions[currentQuestionIndex];
+            
+            const alreadyTracked = missedQuestions.some(m => m.target === currentQ.target);
+            if (!alreadyTracked) {
+                missedQuestions.push(currentQ);
+            }
+
+            roundQuestions.splice(currentQuestionIndex, 1);
+            roundQuestions.push(currentQ);
+
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            playSound('pop');
+            
+            if (isTutorialMode) {
+                // Tutorial complete -> Start question 1
+                isTutorialMode = false;
+                currentQuestionIndex = 0;
+                renderQuestion();
+            } else if (isCorrectionMode) {
+                currentCorrectionIndex++;
+                if (currentCorrectionIndex < missedQuestions.length) {
+                    renderQuestion();
+                } else {
+                    isCorrectionMode = false;
+                    showSummaryScreen(true);
+                }
+            } else {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < roundQuestions.length) {
+                    renderQuestion();
+                } else {
+                    showSummaryScreen();
+                }
+            }
+        }
+
+        /* Flutter animated butterflies to Completed Pairs Gallery */
+        function flyPairToGallery(targetVal, requiredVal) {
+            const gallery = document.getElementById('completed-pairs-gallery');
+            const emptyMsg = document.getElementById('empty-gallery-msg');
+            if (emptyMsg) emptyMsg.remove();
+
+            const targetPalette = getPaletteIndexForNumber(targetVal);
+            const reqPalette = getPaletteIndexForNumber(requiredVal);
+
+            const pairBadge = document.createElement('div');
+            pairBadge.className = "flex items-center gap-1 bg-white/90 border border-emerald-300 px-2 py-1 rounded-xl shadow-xs shrink-0 animate-bounce";
+            pairBadge.innerHTML = `
+                <div class="flex flex-col items-center">
+                    <div class="w-6 h-5">${generateButterflySVG(targetVal, targetPalette)}</div>
+                    <span class="text-[9px] font-extrabold text-slate-700 font-num">${targetVal}</span>
+                </div>
+                <span class="text-[10px] font-extrabold text-emerald-700 font-num mb-2">+</span>
+                <div class="flex flex-col items-center">
+                    <div class="w-6 h-5">${generateButterflySVG(requiredVal, reqPalette)}</div>
+                    <span class="text-[9px] font-extrabold text-slate-700 font-num">${requiredVal}</span>
+                </div>
+                <span class="text-[10px] font-extrabold text-emerald-800 font-num ml-0.5 mb-2">= 10</span>
+            `;
+
+            gallery.appendChild(pairBadge);
+        }
+
+        /* Start Duolingo-style Correction Mode */
+        function startCorrectionsMode() {
+            playSound('pop');
+            isCorrectionMode = true;
+            currentCorrectionIndex = 0;
+            document.getElementById('summary-card').classList.add('hidden');
+            document.getElementById('game-card').classList.remove('hidden');
+            renderQuestion();
+        }
+
+        /* End of Game Summary Screen */
+        function showSummaryScreen(justCompletedCorrections = false) {
+            playSound('win');
+            document.getElementById('game-card').classList.add('hidden');
+            document.getElementById('summary-card').classList.remove('hidden');
+
+            document.getElementById('final-score').textContent = score;
+
+            // Render Stars
+            const starContainer = document.getElementById('star-rating');
+            starContainer.innerHTML = '';
+            let stars = score >= 9 ? 3 : score >= 6 ? 2 : 1;
+            if (justCompletedCorrections) stars = 3;
+
+            for (let i = 0; i < 3; i++) {
+                const star = document.createElement('i');
+                star.className = i < stars ? "fa-solid fa-star text-amber-400" : "fa-regular fa-star text-slate-300";
+                starContainer.appendChild(star);
+            }
+
+            const feedbackText = document.getElementById('summary-feedback');
+            const correctionsBtnContainer = document.getElementById('corrections-btn-container');
+
+            if (justCompletedCorrections) {
+                feedbackText.textContent = "Outstanding work! You reviewed all your missed bonds to 10!";
+                if (correctionsBtnContainer) correctionsBtnContainer.innerHTML = '';
+            } else if (score === 10 && missedQuestions.length === 0) {
+                feedbackText.textContent = "Superstar! You mastered every single number bond to 10 on your first try!";
+                if (correctionsBtnContainer) correctionsBtnContainer.innerHTML = '';
+            } else if (missedQuestions.length > 0) {
+                feedbackText.textContent = `You completed 10 questions! You had ${missedQuestions.length} bond${missedQuestions.length > 1 ? 's' : ''} to review.`;
+                
+                // Inject "Review Missed Bonds" button for any questions missed on 1st try
+                if (correctionsBtnContainer) {
+                    correctionsBtnContainer.innerHTML = `
+                        <button onclick="startCorrectionsMode()" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-extrabold text-base sm:text-lg px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2.5 my-3 animate-pulse">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>Review Missed Bonds (${missedQuestions.length})</span>
+                        </button>
+                    `;
+                }
+            } else {
+                feedbackText.textContent = "Great job! Keep dragging butterflies to practice making 10!";
+                if (correctionsBtnContainer) correctionsBtnContainer.innerHTML = '';
+            }
+
+            // Render all 10 Number Bonds sequentially in numerical order (1 to 10)
+            renderFinalSkyBonds();
+
+            confetti({
+                particleCount: 120,
+                spread: 100,
+                origin: { y: 0.5 }
+            });
+        }
+
+        function renderFinalSkyBonds() {
+            const skyContainer = document.getElementById('final-bonds-sky');
+            skyContainer.innerHTML = '';
+
+            // Sort bonds in ascending numerical order by target value (0, 1, 2, 3, ... 9)
+            const sortedBonds = [...NUMBER_BONDS].sort((a, b) => a.target - b.target);
+
+            sortedBonds.forEach(bond => {
+                const targetPalette = getPaletteIndexForNumber(bond.target);
+                const reqPalette = getPaletteIndexForNumber(bond.required);
+
+                const card = document.createElement('div');
+                card.className = "flex flex-col items-center bg-white/90 rounded-xl p-1.5 border border-sky-100 shadow-xs hover:scale-105 transition-transform cursor-pointer hover:border-amber-300 hover:shadow-md";
+                
+                // Add click listener to launch magnified bond inspector modal
+                card.onclick = function() {
+                    openBondInspector(bond.target, bond.required);
+                };
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-1 w-full justify-center pointer-events-none">
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 h-5">${generateButterflySVG(bond.target, targetPalette)}</div>
+                            <span class="text-[9px] font-extrabold text-slate-700 font-num">${bond.target}</span>
+                        </div>
+                        <span class="text-[10px] font-extrabold text-slate-400 font-num mb-2">+</span>
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 h-5">${generateButterflySVG(bond.required, reqPalette)}</div>
+                            <span class="text-[9px] font-extrabold text-slate-700 font-num">${bond.required}</span>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-extrabold text-sky-800 font-num mt-0.5 pointer-events-none">
+                        ${bond.target} + ${bond.required} = 10
+                    </span>
+                `;
+                skyContainer.appendChild(card);
+            });
+        }
+
+        /* Modal Functions for Large Bond Inspector */
+        function openBondInspector(targetVal, reqVal) {
+            playSound('pop');
+
+            const tPalette = getPaletteIndexForNumber(targetVal);
+            const rPalette = getPaletteIndexForNumber(reqVal);
+            const tenPalette = getPaletteIndexForNumber(10);
+
+            document.getElementById('modal-b1-svg').innerHTML = generateButterflySVG(targetVal, tPalette);
+            document.getElementById('modal-b1-label').textContent = `${targetVal} Spot${targetVal === 1 ? '' : 's'}`;
+
+            document.getElementById('modal-b2-svg').innerHTML = generateButterflySVG(reqVal, rPalette);
+            document.getElementById('modal-b2-label').textContent = `${reqVal} Spot${reqVal === 1 ? '' : 's'}`;
+
+            document.getElementById('modal-ten-svg').innerHTML = generateButterflySVG(10, tenPalette);
+
+            document.getElementById('modal-equation-text').textContent = `${targetVal} + ${reqVal} = 10`;
+            document.getElementById('modal-words-text').textContent = `${NUMBER_WORDS[targetVal]} and ${NUMBER_WORDS[reqVal]} make Ten`;
+
+            document.getElementById('bond-inspector-modal').classList.remove('hidden');
+        }
+
+        function closeBondInspector() {
+            playSound('pop');
+            document.getElementById('bond-inspector-modal').classList.add('hidden');
+        }
+
+        // Initialize Game on Window Load
+        window.onload = function() {
+            initGame();
+        };
+    </script>
+</body>
+</html>
